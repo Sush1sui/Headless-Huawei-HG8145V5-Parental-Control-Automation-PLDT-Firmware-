@@ -1,0 +1,12 @@
+[
+  {
+    "name": "Galaxy Note 20 Ultra",
+    "mac": "mac_address_here",
+    "ip": "ip_address_here"
+  },
+  {
+    "name": "POCO X7 PRO",
+    "mac": "mac_address_here",
+    "ip": "ip_address_here"
+  }
+]

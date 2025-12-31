@@ -1,0 +1,25 @@
+{
+  "name": "wifi-ssh-troller",
+  "version": "1.0.0",
+  "description": "cuz i wanna mess with the people at my home",
+  "license": "ISC",
+  "author": "Sush1sui",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node --loader ts-node/esm src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "playwright": "^1.57.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "keywords": []
+}
