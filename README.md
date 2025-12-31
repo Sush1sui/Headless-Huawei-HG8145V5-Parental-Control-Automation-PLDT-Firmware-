@@ -73,7 +73,6 @@ This project is presented as a parental-control automation simulator intended on
 ## Acknowledgements
 
 - Inspired by the challenges of automating legacy frameset UIs.
-- If desired, list major libraries from `package.json` here.
 
 ## License
 
