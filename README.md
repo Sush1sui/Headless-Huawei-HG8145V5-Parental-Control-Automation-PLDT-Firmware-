@@ -74,10 +74,6 @@ This project is presented as a parental-control automation simulator intended on
 
 - Inspired by the challenges of automating legacy frameset UIs.
 
-## License
-
-Choose a license (for example, MIT) and add a `LICENSE` file to the repository.
-
 ## Dedication
 
 This project is dedicated to my parents — a personal reminder to channel frustration into learning and constructive projects (YES, I run this script whenever we have an argument).
