@@ -1,4 +1,4 @@
-import { Page } from "playwright";
+import { Page } from "puppeteer";
 import waitInSeconds from "./waitInSeconds.js";
 
 export default async function navigateToSecurity(page: Page) {
@@ -6,7 +6,7 @@ export default async function navigateToSecurity(page: Page) {
   await page.click('div[name="maindiv_firewalllevel"]');
 
   // wait for the network to settle so the frames can load
-  await page.waitForLoadState("networkidle");
+  await page.waitForNetworkIdle();
 
   // instead of naming the frame, we find the one that actually HAS the button
   const frames = page.frames();
@@ -29,7 +29,7 @@ export default async function navigateToSecurity(page: Page) {
   await targetFrame.click('div[name="subdiv_parentalctrlstatus"]');
 
   // wait for the main configuration frame to load
-  await page.waitForLoadState("networkidle");
+  await page.waitForNetworkIdle();
 
   // find and return the frame containing the 'New' button
   for (const frame of page.frames()) {

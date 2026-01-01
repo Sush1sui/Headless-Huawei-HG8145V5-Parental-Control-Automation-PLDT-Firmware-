@@ -27,3 +27,6 @@ Thumbs.db
 
 # --- Exclude Devices Lists ---
 *deviceLists.json
+
+# --- Browsers ---
+chrome

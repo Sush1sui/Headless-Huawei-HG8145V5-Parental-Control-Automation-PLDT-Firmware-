@@ -1,5 +1,4 @@
-import 'dotenv/config';
-import { chromium } from 'playwright';
+import puppeteer from 'puppeteer';
 import deviceList from '../deviceLists.json' with { type: 'json' };
 import login from './login.js';
 import waitInSeconds from './waitInSeconds.js';
@@ -10,24 +9,28 @@ import clearTargets from './clearTargets.js';
 
 export default async function startCycle() {
   // launch headed browser so you can see actions (set headless: false)
-  const browser = await chromium.launch({
+  const browser = await puppeteer.launch({
     headless: true,
-    slowMo: 50,
-    args: ['--disable-gpu', '--no-sandbox', '--start-maximized'],
+    executablePath: undefined,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--ignore-certificate-errors',
+      '--no-zygote',
+      '--disable-dev-shm-usage', // Vital for Windows memory stability
+      '--remote-debugging-port=9222' // Forces a stable connection pipe
+    ],
+    dumpio: true
   })
 
+  await waitInSeconds(3)
 
   try {
     console.log(`[${new Date().toLocaleTimeString()}] Accessing router at ${process.env.ROUTER_HOST}...`);
 
-    // create context that ignores SSL errors
-    const context = await browser.newContext({
-      ignoreHTTPSErrors: true,
-    })
+    const page = await browser.newPage()
 
-    const page = await context.newPage()
-
-    await page.goto(`https://${process.env.ROUTER_HOST}/admin.html`, { waitUntil: 'networkidle' });
+    await page.goto(`https://${process.env.ROUTER_HOST}/admin.html`, { waitUntil: 'networkidle2' });
 
     // login
     await login(
@@ -48,6 +51,12 @@ export default async function startCycle() {
   } catch (error) {
     console.error("An error occurred:", error);
   } finally {
-    await browser.close();
+    await waitInSeconds(5)
+
+    try { // try catch to swallow the Bun/Windows cleanup errors
+      await browser.close();
+    } catch (e) {
+      // ignore cleanup errors since the work is already done
+    }
   }
 }

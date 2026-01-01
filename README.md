@@ -1,78 +1,241 @@
-# Headless Huawei HG8145V5 Parental Control Automation (PLDT Firmware)
+# WiFi Russian Roulette 🎲
 
-A headless automation suite demonstrating how to navigate legacy frameset-based router UIs (example target: Huawei HG8145V5 with PLDT firmware). This repository contains helper modules and a small automation scaffold intended for educational, research, and defensive configuration tasks — not for unauthorized access or disruption.
+An automated parental control system for Huawei HG8145V5 routers (PLDT firmware) that randomly selects and applies access restrictions to devices on your network. Runs on a 10-minute interval to keep everyone guessing.
 
-## Purpose
+## What It Does
 
-This project demonstrates techniques for interacting with complex, frameset-based web UIs using headless automation. Use it to build safe tooling for administration, testing, or research in environments you own or are explicitly authorized to test.
+This automation tool:
+
+- Logs into your Huawei router admin panel
+- Navigates to the parental control/security settings
+- Randomly selects up to 7 devices from your configured device list
+- Applies a specified access template (time restrictions) to those devices
+- Repeats every 10 minutes, shuffling which devices get restricted
 
 ## Features
 
-- Headless browser automation for frameset navigation
-- Modular helpers for login, navigation, timing, and device targeting
-- Example device list (for safe, offline testing)
+- **Puppeteer-based automation** for reliable router UI interaction
+- **Random device selection** from your device list
+- **Automatic retry logic** with configurable intervals
+- **Environment-based configuration** for security
+- **Modular helper functions** for maintainability
+- **TypeScript** for type safety
 
 ## Prerequisites
 
-- Node.js v16+ (or a compatible LTS)
-- npm (bundled with Node.js)
-- A controlled test environment (physical or virtual) — do not run against devices or networks without permission
+- **Bun** (recommended) or Node.js v18+
+- A Huawei HG8145V5 router with PLDT firmware
+- Admin access to your router
+- Windows, macOS, or Linux
 
 ## Quick Start
 
-Install dependencies:
+### 1. Install Bun (if not already installed)
 
 ```bash
-npm install
+# Windows (PowerShell)
+powershell -c "irm bun.sh/install.ps1|iex"
+
+# macOS/Linux
+curl -fsSL https://bun.sh/install | bash
 ```
 
-Install Playwright Browser Binaries (CRITICAL):
-
-```
-npx playwright install chromium
-```
-
-Run in development mode:
+### 2. Install Dependencies
 
 ```bash
-npm run dev
+bun install
 ```
 
-If your repository includes linting or tests, run them with:
+This automatically installs Puppeteer's Chromium binary via the `postinstall` script.
+
+### 3. Configure Environment
+
+Create a `.env` file in the root directory:
 
 ```bash
-npm test
-# or
-npm run lint
+cp .env.example .env
 ```
+
+Edit `.env` with your router credentials:
+
+```env
+ROUTER_HOST=192.168.1.1
+ROUTER_USER=adminpldt
+ROUTER_PASS=your_router_password
+TEMPLATE_NAME="Internet access 5am - 8pm"
+```
+
+**Note:** The `TEMPLATE_NAME` must exactly match a parental control template you've already created in your router's UI.
+
+### 4. Configure Device List
+
+Create `src/deviceLists.json` based on the example:
+
+```bash
+cp src/deviceLists.example.json src/deviceLists.json
+```
+
+Edit `src/deviceLists.json` with your devices' MAC addresses and names:
+
+```json
+[
+  {
+    "name": "Galaxy Note 20 Ultra",
+    "mac": "AA:BB:CC:DD:EE:FF"
+  },
+  {
+    "name": "POCO X7 PRO",
+    "mac": "11:22:33:44:55:66"
+  }
+]
+```
+
+### 5. Run the Automation
+
+```bash
+bun dev
+```
+
+The script will:
+
+1. Launch a Chromium browser (non-headless by default, so you can watch)
+2. Log into your router
+3. Apply random restrictions every 10 minutes
 
 ## Project Structure
 
-- `src/` — Source code
-  - `src/helpers/` — Helper modules: `login`, `navigateToSecurity`, `startCycle`, `targetDevices`, etc.
-- `deviceLists.json` — Example device list for safe testing
+```
+yall-are-cooked/
+├── src/
+│   ├── index.ts                    # Main entry point, runs the cycle every 10 minutes
+│   ├── types.ts                    # TypeScript interfaces
+│   ├── deviceLists.json            # Your device list (not tracked in git)
+│   ├── deviceLists.example.json    # Example device list template
+│   └── helpers/
+│       ├── startCycle.ts           # Main automation orchestrator
+│       ├── login.ts                # Router login handler
+│       ├── navigateToSecurity.ts   # Navigate to parental control section
+│       ├── targetDevices.ts        # Apply restrictions to random devices
+│       ├── clearTargets.ts         # Clear existing restrictions
+│       └── waitInSeconds.ts        # Utility delay function
+├── .env                            # Your router credentials (not tracked in git)
+├── .env.example                    # Example environment template
+├── package.json                    # Project metadata and scripts
+├── tsconfig.json                   # TypeScript configuration
+└── README.md                       # This file
+```
 
 ## Configuration
 
-- Use `deviceLists.json` only with harmless placeholder MACs and names when experimenting.
-- Add any credentials or secrets via environment variables if you extend the project; never hard-code secrets.
+### Environment Variables (`.env`)
+
+| Variable        | Description                                      | Example                       |
+| --------------- | ------------------------------------------------ | ----------------------------- |
+| `ROUTER_HOST`   | Router IP address                                | `192.168.1.1`                 |
+| `ROUTER_USER`   | Router admin username                            | `adminpldt`                   |
+| `ROUTER_PASS`   | Router admin password                            | `your_password`               |
+| `TEMPLATE_NAME` | Name of pre-configured parental control template | `"Internet access 5am - 8pm"` |
+
+### Device List (`src/deviceLists.json`)
+
+Each device entry requires:
+
+- `name`: Human-readable device name
+- `mac`: MAC address (format: `AA:BB:CC:DD:EE:FF`)
+
+### Customization
+
+Edit [src/index.ts](src/index.ts) to change the refresh interval (default: 10 minutes):
+
+```typescript
+const REFRESH_INTERVAL = 10 * 60 * 1000; // milliseconds
+```
+
+Edit [src/helpers/targetDevices.ts](src/helpers/targetDevices.ts) to change max devices per cycle (default: 7):
+
+```typescript
+await targetDevices(deviceList, targetFrame, 7); // last parameter
+```
+
+## Troubleshooting
+
+### Browser Hangs on Launch (Bun on Windows)
+
+If the browser hangs when launching with Bun, this is typically due to Puppeteer/Chromium compatibility issues. The current configuration includes Windows-specific fixes:
+
+```typescript
+args: [
+  "--disable-dev-shm-usage", // Prevents shared memory issues
+  "--remote-debugging-port=9222", // Forces stable connection pipe
+];
+```
+
+### Router Connection Issues
+
+- Verify your router IP is correct in `.env`
+- Ensure you can manually access `https://YOUR_ROUTER_IP/admin.html`
+- Check that your admin credentials are correct
+- Make sure your template name exactly matches one in your router settings
+
+### Device Not Found
+
+- Verify MAC addresses are correct in `deviceLists.json`
+- Ensure devices are connected to the router
+- Check that the MAC address format matches your router's format
+
+## How It Works
+
+1. **Initialization**: Launches Puppeteer browser and navigates to router admin panel
+2. **Authentication**: Logs in using credentials from `.env`
+3. **Navigation**: Navigates through frameset-based UI to parental control section
+4. **Clear**: Removes any existing restrictions
+5. **Random Selection**: Picks up to 7 random devices from your list
+6. **Apply**: Applies the specified template to each selected device
+7. **Repeat**: Waits 10 minutes and runs again
+
+## Running with Node.js
+
+While Bun is recommended, you can also use Node.js:
+
+```bash
+npm install
+npm run dev
+```
 
 ## Safety & Ethics
 
-This project is presented as a parental-control automation simulator intended only for lawful, authorized, and consensual use. It demonstrates techniques for scheduling and applying access controls to devices in a controlled environment (for example, to simulate parental-management policies in a lab or on devices you own). Do not use this code to access, disrupt, or otherwise interfere with devices or networks you do not own or have explicit permission to manage. Always obtain consent and follow applicable laws and responsible disclosure practices.
+This project is designed for use **only on networks and devices you own or have explicit permission to manage**. It's a personal automation tool for parental control and network management.
 
-- This project is provided for educational and defensive purposes only.
-- Do not use the code to access, interfere with, or disrupt devices or networks you do not own or have explicit permission to test.
-- If you discover a security issue in firmware or devices, follow responsible disclosure practices.
+**Intended use cases:**
+
+- Parents managing their children's device access
+- Network administrators testing parental control policies
+- Personal network management in your own home
+
+**Not intended for:**
+
+- Unauthorized access to networks or devices
+- Interfering with networks you don't own
+- Malicious disruption of services
+
+Always ensure you have proper authorization before running this tool.
 
 ## Contributing
 
-- Contributions are welcome, but maintainers will refuse changes that enable misuse.
-- When adding examples, keep them non-actionable and safe (read-only demonstrations, screenshots, anonymized data).
+Contributions are welcome! Please ensure any changes:
 
-## Acknowledgements
+- Maintain the educational/legitimate use focus
+- Include proper error handling
+- Follow existing code style
+- Update documentation as needed
 
-- Inspired by the challenges of automating legacy frameset UIs.
+## License
+
+ISC License - See [LICENSE](LICENSE) for details
+
+## Author
+
+**Sush1sui** - Because sometimes you gotta channel that parental frustration into something productive 😅
 
 ## Dedication
 
